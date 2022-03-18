@@ -6,6 +6,7 @@ const sanitize = require("express-mongo-sanitize");
 const cors = require("cors");
 const User = require("./models/user");
 const Comment = require("./models/comments");
+const Class = require("./models/class");
 const app = express();
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
@@ -56,6 +57,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+//SignIn route
 app.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -102,48 +104,27 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-app.post("/getPassword", async (req, res) => {
-  try {
-    const { email, secretKey } = req.body;
-    if (!(email && secretKey)) {
-      res.status(400).json({
-        message: "All fields are mandatory",
-      });
-    }
-    const user = await User.findOne({ email });
-    if (user && (await bcrypt.compare(secretKey, user?.secretKey))) {
-      const round1 = Buffer.from(user?.password, "base64").toString("ascii");
-      const myPassword = Buffer.from(round1, "base64").toString("ascii");
-      res.status(200).json({
-        message: myPassword,
-      });
-    } else {
-      res.status(400).json({ message: "Email or secreKey not found" });
-    }
-  } catch (error) {
-    res.status(400).json({ message: "Unable to verify secretKey password" });
-  }
-});
-
-app.post("/comment", auth, async (req, res) => {
-  const { comment } = req.body;
+//Create Class
+app.post("/class", auth, async (req, res) => {
+  const { name, teacher, section, year } = req.body;
   const { email } = req.user;
-  const myComment = new Comment({ comment, email });
+  const createClass = new Class({ name, teacher, section, year, email });
   try {
-    await myComment.save();
-    res.status(200).json({ message: "comment save success" });
+    await createClass.save();
+    res.status(200).json({ message: "class created successfully." });
   } catch (error) {
-    res.status(400).json({ message: "Unable to create a comment" });
+    res.status(400).json({ message: "Unable to create a class" });
   }
 });
 
-app.get("/comments", auth, async (req, res) => {
+//Get Class
+app.get("/class", auth, async (req, res) => {
   try {
-    const { email } = req.user;
-    const data = await Comment.find();
-    res.status(200).send({ message: data, email });
+    const data = await Class.find();
+    res.status(200).send({ data });
   } catch (error) {
-    res.status(400).json({ message: "Unable to fetch a comment" });
+    res.status(400).json({ message: "Unable to fetch a class" });
   }
 });
+
 module.exports = app;
