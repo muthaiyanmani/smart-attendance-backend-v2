@@ -4,9 +4,13 @@ const express = require("express");
 const cookie = require("cookie");
 const sanitize = require("express-mongo-sanitize");
 const cors = require("cors");
+
+//Schema
 const User = require("./models/user");
 const Comment = require("./models/comments");
 const Class = require("./models/class");
+const Student = require("./models/student");
+
 const app = express();
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
@@ -107,13 +111,21 @@ app.post("/signin", async (req, res) => {
 //Create Class
 app.post("/class", auth, async (req, res) => {
   const { name, teacher, section, year } = req.body;
+  if (!(name && teacher && section && year))
+    return res.status(400).json({ message: "All fields are mandatory" });
   const { email } = req.user;
-  const createClass = new Class({ name, teacher, section, year, email });
+  const createClass = new Class({
+    name,
+    teacher,
+    section,
+    year,
+    createdBy: email,
+  });
   try {
     await createClass.save();
     res.status(200).json({ message: "class created successfully." });
   } catch (error) {
-    res.status(400).json({ message: "Unable to create a class" });
+    res.status(400).json({ message: "Unable to create a class." });
   }
 });
 
@@ -124,6 +136,90 @@ app.get("/class", auth, async (req, res) => {
     res.status(200).send({ data });
   } catch (error) {
     res.status(400).json({ message: "Unable to fetch a class" });
+  }
+});
+
+//Create Student
+app.post("/student", auth, async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    class: classRoom,
+    mediumOfInstruction,
+    email,
+    dateOfBirth,
+    address,
+    fatherName,
+    fatherOccupation,
+    motherName,
+    motherOccupation,
+    annualIncome,
+    mobile,
+    photoUrl,
+  } = req.body;
+
+  if (
+    !(
+      firstName &&
+      lastName &&
+      classRoom &&
+      mediumOfInstruction &&
+      dateOfBirth &&
+      address &&
+      fatherName &&
+      motherName &&
+      annualIncome &&
+      mobile
+    )
+  )
+    return res.status(400).json({ message: "All fields are mandatory" });
+  const { email: author } = req.user;
+
+  const createStudent = new Student({
+    firstName,
+    lastName,
+    class: classRoom,
+    mediumOfInstruction,
+    email,
+    dateOfBirth,
+    address,
+    fatherName,
+    fatherOccupation,
+    motherName,
+    motherOccupation,
+    annualIncome,
+    mobile,
+    photoUrl,
+    createdBy: author,
+  });
+
+  try {
+    await createStudent.save();
+    res.status(200).json({ message: "Student created successfully." });
+  } catch (error) {
+    res.status(400).json({ message: "Unable to create a student." });
+  }
+});
+
+//Get Student By Class
+app.get("/students/:class", auth, async (req, res) => {
+  const { class: classRoom } = req.params;
+  try {
+    const data = await Student.find({ class: classRoom });
+    res.status(200).send({ data });
+  } catch (error) {
+    res.status(400).json({ message: "Unable to fetch a student" });
+  }
+});
+
+//Get Student By Id
+app.get("/student/:class/:id", auth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const data = await Student.find({ _id: id });
+    res.status(200).send({ data });
+  } catch (error) {
+    res.status(400).json({ message: "Unable to fetch a student" });
   }
 });
 

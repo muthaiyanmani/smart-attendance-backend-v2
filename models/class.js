@@ -15,8 +15,12 @@ const classSchema = new Schema({
   year: {
     type: String,
   },
-  email: {
+  createdBy: {
     type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
