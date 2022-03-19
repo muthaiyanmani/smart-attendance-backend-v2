@@ -7,7 +7,6 @@ const cors = require("cors");
 
 //Schema
 const User = require("./models/user");
-const Comment = require("./models/comments");
 const Class = require("./models/class");
 const Student = require("./models/student");
 
@@ -32,17 +31,17 @@ app.use(sanitize()); // To prevent from XSS
 //Sign Up
 app.post("/signup", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
 
-    if (!(email && password)) {
-      res.status(400).json({
+    if (!(email && password && name)) {
+      return res.status(400).json({
         message: "All fields are mandatory",
       });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(401).json({
+      return res.status(401).json({
         message: "Email already exists",
       });
     }
@@ -52,6 +51,7 @@ app.post("/signup", async (req, res) => {
     await User.create({
       email: email.toLowerCase(),
       password: myPassword,
+      name,
     });
     res.status(201).json({ message: "registered success" });
   } catch (error) {
@@ -66,7 +66,7 @@ app.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!(email && password)) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "All fields are mandatory",
       });
     }
@@ -94,7 +94,7 @@ app.post("/signin", async (req, res) => {
       res.setHeader("Set-Cookie", [cookie.serialize("token", token, options)]);
       res.status(200).json({
         message: "signin success",
-        token,
+        user: { token, name: user?.name },
       });
     } else {
       res.status(400).json({
