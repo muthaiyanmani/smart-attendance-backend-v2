@@ -29,7 +29,7 @@ app.use(cookieParser()); // Cookie parser
 
 app.use(sanitize()); // To prevent from XSS
 
-//SignUp route
+//Sign Up
 app.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -61,7 +61,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-//SignIn route
+//Sign In
 app.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -206,7 +206,21 @@ app.get("/students/:class", auth, async (req, res) => {
   const { class: classRoom } = req.params;
   try {
     const data = await Student.find({ class: classRoom });
-    res.status(200).send({ data });
+    const result = [];
+    data &&
+      data.map(
+        ({ firstName, lastName, photoUrl, email, mobile, dateOfBirth, _id }) =>
+          result.push({
+            firstName,
+            lastName,
+            photoUrl,
+            id: _id,
+            email,
+            mobile,
+            dateOfBirth,
+          })
+      );
+    res.status(200).send({ data: result });
   } catch (error) {
     res.status(400).json({ message: "Unable to fetch a student" });
   }
@@ -223,4 +237,62 @@ app.get("/student/:class/:id", auth, async (req, res) => {
   }
 });
 
+//Update Student
+app.put("/student/:id", auth, async (req, res) => {
+  const { id } = req.params;
+  const {
+    firstName,
+    lastName,
+    class: classRoom,
+    mediumOfInstruction,
+    email,
+    dateOfBirth,
+    address,
+    fatherName,
+    fatherOccupation,
+    motherName,
+    motherOccupation,
+    annualIncome,
+    mobile,
+    photoUrl,
+  } = req.body;
+  if (
+    !(
+      firstName &&
+      lastName &&
+      classRoom &&
+      mediumOfInstruction &&
+      dateOfBirth &&
+      address &&
+      fatherName &&
+      motherName &&
+      annualIncome &&
+      mobile
+    )
+  )
+    return res.status(400).json({ message: "All fields are mandatory" });
+  const { email: author } = req.user;
+  try {
+    await Student.findByIdAndUpdate(id, {
+      firstName,
+      lastName,
+      class: classRoom,
+      mediumOfInstruction,
+      email,
+      dateOfBirth,
+      address,
+      fatherName,
+      fatherOccupation,
+      motherName,
+      motherOccupation,
+      annualIncome,
+      mobile,
+      photoUrl,
+      updatedBy: author,
+    });
+    res.status(200).json({ message: "Student updated successfully." });
+  } catch (error) {
+    res.status(400).json({ message: "Unable to update a student." });
+  }
+});
 module.exports = app;

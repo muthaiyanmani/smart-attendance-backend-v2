@@ -49,6 +49,9 @@ const studentSchema = new Schema({
   createdBy: {
     type: String,
   },
+  updatedBy: {
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
